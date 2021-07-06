@@ -115,8 +115,8 @@ int main()
 
             //Game Playing
 
-            //At a white square, turn 90° clockwise, flip the color of the square, move forward one unit
-            //At a black square, turn 90° counter - clockwise, flip the color of the square, move forward one unit
+            //At a white square, turn 90Â° clockwise, flip the color of the square, move forward one unit
+            //At a black square, turn 90Â° counter - clockwise, flip the color of the square, move forward one unit
             if (board[antData.x][antData.y]) {
                 antData.direction = (antData.direction + 1) % 4;
                 board[antData.x][antData.y] = 0;
