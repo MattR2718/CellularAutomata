@@ -10,12 +10,12 @@ struct Ant {
 int main()
 {
     const int lineWidth = 1;
-    const int cellSize = 10;
-    const int windowX = 800;
-    const int windowY = 600;
+    const int cellSize = 25;
+    const int windowX = sf::VideoMode::getDesktopMode().width;
+    const int windowY = sf::VideoMode::getDesktopMode().height;
     int step = 0;
     bool running = 0;
-    bool board[(windowX/cellSize)][(windowY/cellSize)];
+    bool board[500][500];
     Ant antData;
     antData.x = (windowX / cellSize)/2;
     antData.y = (windowY / cellSize)/2;
@@ -30,7 +30,7 @@ int main()
 
     //Font
     sf::Font font;
-    font.loadFromFile("arial.ttf");
+    font.loadFromFile("../font/arial.ttf");
 
     // create the window
     sf::RenderWindow window(sf::VideoMode(windowX, windowY), "My window");
@@ -55,17 +55,17 @@ int main()
         //
         //Grid
         //Horizontal
-        sf::RectangleShape hLine(sf::Vector2f(windowX, lineWidth));
+        sf::RectangleShape hLine(sf::Vector2f(static_cast<float>(windowX), lineWidth));
         hLine.setFillColor(sf::Color(100, 100, 100));
         for (int y = 0; y < windowY; y += cellSize) {
-            hLine.setPosition(0, y);
+            hLine.setPosition(0, static_cast<float>(y));
             window.draw(hLine);
         }
         //Vertical
-        sf::RectangleShape vLine(sf::Vector2f(lineWidth, windowY));
+        sf::RectangleShape vLine(sf::Vector2f(lineWidth, static_cast<float>(windowY)));
         vLine.setFillColor(sf::Color(100, 100, 100));
         for (int x = 0; x < windowX; x += cellSize) {
-            vLine.setPosition(x, 0);
+            vLine.setPosition(static_cast<float>(x), 0);
             window.draw(vLine);
         }
 
@@ -75,19 +75,19 @@ int main()
             for (int y = 0; y < windowY / cellSize; y++) {
                 if (board[x][y]) { cell.setFillColor(sf::Color(255, 255, 255));}
                 else { cell.setFillColor(sf::Color(0, 0, 0)); }
-                cell.setPosition((x * cellSize)+lineWidth, (y * cellSize)+lineWidth);
+                cell.setPosition(static_cast<float>((x * cellSize)+lineWidth), static_cast<float>((y * cellSize)+lineWidth));
                 window.draw(cell);
             }
         }
         //Draw ant
         sf::RectangleShape ant(sf::Vector2f(cellSize - lineWidth, cellSize - lineWidth));
-        ant.setPosition((antData.x * cellSize) + lineWidth, (antData.y * cellSize) + lineWidth);
+        ant.setPosition(static_cast<float>((antData.x * cellSize) + lineWidth), static_cast<float>((antData.y * cellSize) + lineWidth));
         ant.setFillColor(sf::Color(255, 0, 0));
         window.draw(ant);
 
         //Draw step count
         sf::Text text("Steps: " + std::to_string(step), font);
-        text.setCharacterSize(30);
+        text.setCharacterSize(50);
         text.setStyle(sf::Text::Bold);
         text.setFillColor(sf::Color::Red);
         window.draw(text);
@@ -97,7 +97,7 @@ int main()
             {
                 if (event.key.code == sf::Keyboard::Space)
                 {
-                    std::cout << "Running" << '\n';
+                    //std::cout << "Running" << '\n';
                     running = 1;
                 }
             }
@@ -108,7 +108,7 @@ int main()
             {
                 if (event.key.code == sf::Keyboard::Escape)
                 {
-                    std::cout << "Stopped" << '\n';
+                    //std::cout << "Stopped" << '\n';
                     running = 0;
                 }
             }
