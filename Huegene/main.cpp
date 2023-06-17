@@ -172,6 +172,16 @@ int main(){
                 imguiData.modifySaturation = true;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
             }
+
+            if(ImGui::Button("Modify All")){
+                imguiData.saturationInitialOption = 1;
+                imguiData.valueInitialOption = 1;
+                imguiData.hueInitialOption = 2;
+                imguiData.modifyValue = true;
+                imguiData.modifyHue = true;
+                imguiData.modifySaturation = true;
+                resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+            }
         }
 
         ImGui::Checkbox("Modify Hue", &imguiData.modifyHue);
