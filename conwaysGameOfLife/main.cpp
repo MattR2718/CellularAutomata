@@ -12,7 +12,7 @@ int main()
     const int HEIGHT = sf::VideoMode::getDesktopMode().height;
 
     // create the window
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "My window");
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Game Of Life");
 
 
     const float lineWidth = 1;

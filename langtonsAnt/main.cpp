@@ -33,7 +33,7 @@ int main()
     font.loadFromFile("../font/arial.ttf");
 
     // create the window
-    sf::RenderWindow window(sf::VideoMode(windowX, windowY), "My window");
+    sf::RenderWindow window(sf::VideoMode(windowX, windowY), "Langton's Ant");
 
     // run the program as long as the window is open
     while (window.isOpen())
