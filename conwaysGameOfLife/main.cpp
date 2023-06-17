@@ -2,23 +2,29 @@
 #include <iostream>
 #include <cmath>
 #include <utility>
+#include <vector>
 
 int main()
 {
     int wSize = 1000;
+
+    const int WIDTH = sf::VideoMode::getDesktopMode().width;
+    const int HEIGHT = sf::VideoMode::getDesktopMode().height;
+
     // create the window
-    sf::RenderWindow window(sf::VideoMode(wSize, wSize), "My window");
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "My window");
 
 
-    const float width = 1;
-    const int size = 100;
-    int cellSize = round(wSize / size);
+    const float lineWidth = 1;
+    int cellSize = 20;
+    const int horizontalCellsNum = WIDTH/cellSize;
+    const int verticalCellsNum = HEIGHT / cellSize;
     bool running = 0;
 
-    bool board[size + 2][size + 2];
-    bool tempBoard[size + 2][size + 2];
-    for (int x = 0; x < size + 2; x++) {
-        for (int y = 0; y < size + 2; y++) {
+    bool board[500][500];
+    bool tempBoard[500][500];
+    for (int x = 0; x < horizontalCellsNum + 2; x++) {
+        for (int y = 0; y < verticalCellsNum + 2; y++) {
             board[x][y] = 0;
             tempBoard[x][y] = 0;
         }
@@ -48,49 +54,49 @@ int main()
         //
         //Set up game board and cells
         //Background
-        sf::RectangleShape background(sf::Vector2f(wSize, wSize));
-        background.setFillColor(sf::Color(0, 0, 0));
+        sf::RectangleShape background(sf::Vector2f(static_cast<float>(WIDTH), static_cast<float>(HEIGHT)));
+        background.setFillColor(sf::Color(25, 25, 25));
         window.draw(background);
 
         //Grid
-        sf::RectangleShape hline(sf::Vector2f(wSize, width));
+        sf::RectangleShape hline(sf::Vector2f(static_cast<float>(WIDTH), lineWidth));
         hline.setFillColor(sf::Color(100, 100, 100));
 
         //horizontal
-        for (int y = 0; y < wSize - width; y += wSize/size) {
-            hline.setPosition(0, y);
+        for (int y = 0; y < HEIGHT - lineWidth; y += cellSize) {
+            hline.setPosition(0, static_cast<float>(y));
             window.draw(hline);
         }
-        hline.setPosition(0, wSize - width);
+        hline.setPosition(0, HEIGHT - lineWidth);
         window.draw(hline);
 
         //vertical
-        sf::RectangleShape vline(sf::Vector2f(width, wSize));
+        sf::RectangleShape vline(sf::Vector2f(lineWidth, static_cast<float>(HEIGHT)));
         vline.setFillColor(sf::Color(100, 100, 100));
-        for (int x = 0; x < wSize - width; x += wSize / size) {
-            vline.setPosition(x, 0);
+        for (int x = 0; x < WIDTH - lineWidth; x += cellSize) {
+            vline.setPosition(static_cast<float>(x), 0);
             window.draw(vline);
         }
-        vline.setPosition(wSize - width, 0);
+        vline.setPosition(WIDTH - lineWidth, 0);
         window.draw(vline);
 
         //Instructions
         sf::Font font;
-        font.loadFromFile("arial.ttf");
+        font.loadFromFile("../font/arial.ttf");
         sf::Text text("SPACE to run  ESC to pause and edit  LCLICK to add cells  RCLICK to remove cells", font);
-        text.setCharacterSize(17);
+        text.setCharacterSize(50);
         text.setStyle(sf::Text::Bold);
         text.setFillColor(sf::Color::White);
-        text.setPosition(0, wSize);
+        text.setPosition(0, 0);
         window.draw(text);
 
-        sf::RectangleShape cell(sf::Vector2f(cellSize - width, cellSize - width));
+        sf::RectangleShape cell(sf::Vector2f(cellSize - lineWidth, cellSize - lineWidth));
         //Adding cells
         if (!running) {
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
             {
-                int x = floor(sf::Mouse::getPosition(window).x / cellSize) * cellSize;
-                int y = floor(sf::Mouse::getPosition(window).y / cellSize) * cellSize;
+                int x = static_cast<int>(std::floor(sf::Mouse::getPosition(window).x / cellSize) * cellSize);
+                int y = static_cast<int>(std::floor(sf::Mouse::getPosition(window).y / cellSize) * cellSize);
                 board[(x / cellSize) + 1][(y / cellSize) + 1] = 1;
             }
         }
@@ -99,8 +105,8 @@ int main()
         if (!running) {
             if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
             {
-                int x = floor(sf::Mouse::getPosition(window).x / cellSize) * cellSize;
-                int y = floor(sf::Mouse::getPosition(window).y / cellSize) * cellSize;
+                int x = static_cast<int>(floor(sf::Mouse::getPosition(window).x / cellSize) * cellSize);
+                int y = static_cast<int>(floor(sf::Mouse::getPosition(window).y / cellSize) * cellSize);
                 //board[(x / cellSize) + 1][(y / cellSize) + 1] = std::make_tuple(x/cellSize, y/cellSize, 0);
                 board[(x / cellSize) + 1][(y / cellSize) + 1] = 0;
             }
@@ -108,9 +114,9 @@ int main()
 
         //Draw cells
         cell.setFillColor(sf::Color(0, 0, 255));
-        for (int x = 1; x < size+1; x++) {
-            for (int y = 1; y < size+1; y++) {
-                cell.setPosition(((x - 1) * cellSize) + width, ((y - 1) * cellSize) + width);
+        for (int x = 1; x < horizontalCellsNum+1; x++) {
+            for (int y = 1; y < verticalCellsNum+1; y++) {
+                cell.setPosition(((x - 1) * cellSize) + lineWidth, ((y - 1) * cellSize) + lineWidth);
                 if (board[x][y]) {
                     window.draw(cell);
                 }
@@ -124,13 +130,13 @@ int main()
             {
                 if (event.key.code == sf::Keyboard::Space)
                 {
-                    std::cout << "Running" << '\n';
+                    //std::cout << "Running" << '\n';
                     running = 1;
                 }
             }
             if (sf::Mouse::isButtonPressed(sf::Mouse::Middle)) {
-                for (int x = 0; x < size + 2; x++) {
-                    for (int y = 0; y < size + 2; y++) {
+                for (int x = 0; x < horizontalCellsNum + 2; x++) {
+                    for (int y = 0; y < verticalCellsNum + 2; y++) {
                         board[x][y] = 0;
                         tempBoard[x][y] = 0;
                     }
@@ -151,22 +157,28 @@ int main()
             //Game Playing
             //bool tempBoard[size + 2][size + 2];
 
-            for (int c = 0; c < size + 2; c++) {
-                for (int v = 0; v < size + 2; v++) {
+            for (int c = 0; c < horizontalCellsNum + 2; c++) {
+                for (int v = 0; v < verticalCellsNum + 2; v++) {
                     tempBoard[c][v] = board[c][v];
                 }
             }
 
-            for (int x = 0; x < size + 2; x++) {
+            /* for(auto& c : tempBoard){
+                for(auto& d : c){
+                    d = 0;
+                }
+            } */
+
+            /* for (int x = 0; x < horizontalCellsNum + 2; x++) {
                 tempBoard[x][0] = 0;
                 tempBoard[0][x] = 0;
-                tempBoard[x][size + 1] = 0;
-                tempBoard[size + 1][x] = 0;
-            }
+                tempBoard[x][verticalCellsNum + 1] = 0;
+                tempBoard[horizontalCellsNum + 1][x] = 0;
+            } */
 
             //if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-                for (int k = 1; k < size + 1; k++) {
-                    for (int l = 1; l < size + 1; l++) {
+                for (int k = 1; k < horizontalCellsNum + 1; k++) {
+                    for (int l = 1; l < verticalCellsNum + 1; l++) {
 
                         //Rule 1
                         //Any live cell with fewer than two live neighbours dies, as if by underpopulation.
@@ -199,8 +211,8 @@ int main()
                 }
 
                 //Switch boards back
-                for (int c = 0; c < size + 2; c++) {
-                    for (int v = 0; v < size + 2; v++) {
+                for (int c = 0; c < horizontalCellsNum + 2; c++) {
+                    for (int v = 0; v < verticalCellsNum + 2; v++) {
                         board[c][v] = tempBoard[c][v];
                     }
                 }

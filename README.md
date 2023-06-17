@@ -1,4 +1,4 @@
-# cellularAutomata
+# CellularAutomata
 
 ## Conway's Game Of Life
 
