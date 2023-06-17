@@ -20,6 +20,11 @@ void resetAllNoneCells(std::vector<Cell>& grid, const int cellSize, const ImguiD
     }
 }
 
+void setCellSize(int cellSize, int& numHV, int& numVV, const int WX, const int WY){
+    numHV = WX/cellSize;
+    numVV = WY/cellSize;
+}
+
 int main(){
     const int windowX = sf::VideoMode::getDesktopMode().width;
     const int windowY = sf::VideoMode::getDesktopMode().height;
@@ -28,9 +33,9 @@ int main(){
 
     ImguiData imguiData;
 
-    const int cellSize = 10;
-    const int numHorizontalCells = windowX/cellSize;
-    const int numVerticalCells = windowY/cellSize;
+    int cellSize = 25;
+    int numHorizontalCells = windowX/cellSize;
+    int numVerticalCells = windowY/cellSize;
 
     //std::cout<<numHorizontalCells<<' '<<numVerticalCells<<'\n';
 
@@ -236,6 +241,16 @@ int main(){
                 }
             } */
             resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+        }
+
+        if(ImGui::SliderInt("Cell Size", &cellSize, 5, 100)){
+            setCellSize(cellSize, numHorizontalCells, numVerticalCells, windowX, windowY);
+            grid.clear();
+            for(int i = 0; i < numHorizontalCells * numVerticalCells; i++){
+                int x = i % numHorizontalCells;
+                int y = i / numHorizontalCells;
+                grid.push_back(Cell(x, y, cellSize, imguiData));
+            }            
         }
 
         if(ImGui::Button("Reset All None Value Cells")){
