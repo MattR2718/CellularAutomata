@@ -64,8 +64,10 @@ class Cell{
             //this->shape.setFillColor(this->colour.getColour());
 
             //window->draw(((this->type == CellType::Plant) ? this->plantShape : this->herbivoreShape));
-            if(this->type == CellType::Herbivore){ window->draw(this->herbivoreShape); }
-            else{ window->draw(this->plantShape); }
+            
+            //if(this->type == CellType::Herbivore){ window->draw(this->herbivoreShape); }
+            //else{ window->draw(this->plantShape); }
+            if(this->type == CellType::Plant){ window->draw(this->plantShape); }
         }
 
 };

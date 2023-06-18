@@ -25,6 +25,9 @@ struct ImguiData{
     int valueInitialOption = 1;
     std::vector<std::string> valueOptionsString = {"Zero", "One", "Random"};
 
+    bool randomHerbivores = false;
+    bool randomPlants = false;
+
 };
 
 

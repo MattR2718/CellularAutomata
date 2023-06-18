@@ -1,5 +1,6 @@
 #include <iostream>
 #include <random>
+#include <chrono>
 
 #include <SFML/Graphics.hpp>
 #include <imgui-SFML.h>
@@ -33,7 +34,7 @@ void reInitialiseGrid(std::vector<Cell>& grid, int numHorizontalCells, int numVe
     }
 }
 
-void mutate(int index, std::vector<Cell>& grid, ImguiData& imguiData, std::mt19937& rng, 
+void mutateplant(int index, std::vector<Cell>& grid, ImguiData& imguiData, std::mt19937& rng, 
             std::uniform_int_distribution<std::mt19937::result_type>& dist01,
             std::uniform_real_distribution<>& realdist05){
     if(imguiData.modifyHue){
@@ -55,10 +56,35 @@ void mutate(int index, std::vector<Cell>& grid, ImguiData& imguiData, std::mt199
     }
 }
 
+void mutateherb(int index, std::vector<Cell>& grid, ImguiData& imguiData, std::mt19937& rng, 
+            std::uniform_int_distribution<std::mt19937::result_type>& dist01,
+            std::uniform_real_distribution<>& realdist010){
+    if(imguiData.modifyHue){
+        grid[index].colour.h += (dist01(rng) - 0.5);
+        if(grid[index].colour.h < 0){ grid[index].colour.h = 360; }
+        if(grid[index].colour.h > 360){ grid[index].colour.h = 0; }
+    }
+    
+    if(imguiData.modifySaturation){
+        grid[index].colour.s += (realdist010(rng)/100 - 0.05);
+        if(grid[index].colour.s < 0.0){ grid[index].colour.s = 0.0; }
+        if(grid[index].colour.s > 1.0){ grid[index].colour.s = 1.0; }
+    }
+
+    if(imguiData.modifyValue){
+        grid[index].colour.v += (realdist010(rng)/100 - 0.05);
+        if(grid[index].colour.v < 0.0){ grid[index].colour.v = 0.0; }
+        if(grid[index].colour.v > 1.0){ grid[index].colour.v = 1.0; }
+    }
+}
+
 int main(){
     const int windowX = sf::VideoMode::getDesktopMode().width;
     const int windowY = sf::VideoMode::getDesktopMode().height;
     sf::RenderWindow window(sf::VideoMode(windowX, windowY), "Huegene");
+    //window.setFramerateLimit(5);
+    //window.setFramerateLimit(30);
+    //window.setFramerateLimit(60);
     auto _ = ImGui::SFML::Init(window);
 
     ImguiData imguiData;
@@ -83,11 +109,20 @@ int main(){
     std::uniform_int_distribution<std::mt19937::result_type> dist010(0, 10);
     std::uniform_int_distribution<std::mt19937::result_type> dist01(0, 1);
     std::uniform_int_distribution<std::mt19937::result_type> dist02(0, 2);
+    std::uniform_int_distribution<std::mt19937::result_type> dist0max(0, grid.size());
+
     std::uniform_real_distribution<> realdist05(0.0, 5.0);
+    std::uniform_real_distribution<> realdist010(0.0, 10.0);
     //Cell grid[100000];
+
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point end;
+    float fps;
 
     sf::Clock deltaClock;
     while(window.isOpen()){
+        start = std::chrono::high_resolution_clock::now();
+
         sf::Event event;
         ImGui::SFML::ProcessEvent(window, event);
         while (window.pollEvent(event))
@@ -99,22 +134,31 @@ int main(){
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
                     auto[mx, my]{mousePos};
-                    grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Plant;
-                    if(imguiData.chooseStartColour){ grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
+                    tempGrid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Plant;
+                    if(imguiData.chooseStartColour){ tempGrid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
+                    else{ tempGrid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Cell(0, 0, 1, imguiData).colour; }
                 }else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)){
                     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
                     auto[mx, my]{mousePos};
-                    grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Herbivore;
-                    if(imguiData.chooseStartColour){ grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
+                    tempGrid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Herbivore;
+                    if(imguiData.chooseStartColour){ tempGrid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
                 }
             }
         }
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space)){
             reInitialiseGrid(grid, numHorizontalCells, numVerticalCells, cellSize, imguiData);
+            tempGrid = grid;
         }
         ImGui::SFML::Update(window, deltaClock.restart());
 
         window.clear(sf::Color::Black);
+
+        if(imguiData.randomHerbivores && !dist01(rng)){
+            grid[dist0max(rng)%grid.size()].type = CellType::Herbivore;
+        }
+        if(imguiData.randomPlants && !dist01(rng)){
+            grid[dist0max(rng)%grid.size()].type = CellType::Plant;
+        }
 
         //Update Cells
         if(imguiData.running){
@@ -128,10 +172,10 @@ int main(){
                             if((y + k) < 0 || (y + k) > (numVerticalCells - 1) || (x + j) < 0 || (x + j) > (numHorizontalCells - 1)){ continue; }
                             int index = (y + k) * numHorizontalCells + (x + j);
                             if(grid[index].type == CellType::None && !dist010(rng)){
-                                grid[index].type = CellType::Plant;
-                                grid[index].colour = grid[y * numHorizontalCells + x].colour;
+                                tempGrid[index].type = CellType::Plant;
+                                tempGrid[index].colour = grid[y * numHorizontalCells + x].colour;
                                 
-                                mutate(index, grid, imguiData, rng, dist01, realdist05);
+                                mutateplant(index, tempGrid, imguiData, rng, dist01, realdist05);
 
                                 /* if(imguiData.modifyHue){
                                     grid[index].colour.h += (dist01(rng) - 0.5);
@@ -172,24 +216,36 @@ int main(){
                         int nextx = x + dist02(rng) - 1;
                         int nexty = y + dist02(rng) - 1;
                         if(nextx < 0 || nextx > (numHorizontalCells - 1) || nexty < 0 || nexty > (numVerticalCells - 1)){ break; }
-                        grid[nexty * numHorizontalCells + nextx] = grid[y * numHorizontalCells + x];
-                        grid[y * numHorizontalCells + x] = Cell(x, y, cellSize, imguiData);
+                        //tempGrid[nexty * numHorizontalCells + nextx] = grid[y * numHorizontalCells + x];
+                        tempGrid[nexty * numHorizontalCells + nextx].colour = grid[y * numHorizontalCells + x].colour;
+                        tempGrid[nexty * numHorizontalCells + nextx].type = CellType::Herbivore;
+                        tempGrid[y * numHorizontalCells + x].type = CellType::None;
+                        //tempGrid[y * numHorizontalCells + x] = Cell(x, y, cellSize, imguiData);
                     }else{
                         for(auto ind : surroundingPlants){
                             float diff = std::max(grid[i].colour.h, grid[ind].colour.h) - std::min(grid[i].colour.h, grid[ind].colour.h);
                             if(diff > 180){ diff = 360 - diff; }
                             diff *= 2;
 
-                            if(!dist01(rng)){
-                                grid[ind].type = CellType::Herbivore;
-                                mutate(ind, grid, imguiData, rng, dist01, realdist05);
+                            if(diff < 20){
+                                if(dist010(rng) < 8){
+                                    //std::cout<<diff<<'\n';
+                                    tempGrid[ind].type = CellType::Herbivore;
+                                    
+                                    mutateherb(ind, tempGrid, imguiData, rng, dist01, realdist010);
+                                    
+                                }
                             }
                         }
-                        grid[i].type = CellType::None;
+                        tempGrid[i].type = CellType::None;
                     }
                 }
             }
         }
+
+
+
+        grid = tempGrid;
 
         //Draw all cells
         for(int i = 0; i < (numHorizontalCells * numVerticalCells); i++){
@@ -217,6 +273,7 @@ int main(){
                 imguiData.modifyHue = false;
                 imguiData.modifySaturation = false;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+                tempGrid = grid;
             }
 
             if(ImGui::Button("GreyScale - White")){
@@ -226,6 +283,7 @@ int main(){
                 imguiData.modifyHue = false;
                 imguiData.modifySaturation = false;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+                tempGrid = grid;
             }
 
             if(ImGui::Button("Dark Colours")){
@@ -236,6 +294,7 @@ int main(){
                 imguiData.modifyHue = true;
                 imguiData.modifySaturation = true;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+                tempGrid = grid;
             }
 
             if(ImGui::Button("Light Colours")){
@@ -246,6 +305,7 @@ int main(){
                 imguiData.modifyHue = true;
                 imguiData.modifySaturation = true;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+                tempGrid = grid;
             }
 
             if(ImGui::Button("Modify All")){
@@ -256,6 +316,7 @@ int main(){
                 imguiData.modifyHue = true;
                 imguiData.modifySaturation = true;
                 resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+                tempGrid = grid;
             }
         }
 
@@ -311,10 +372,15 @@ int main(){
                 }
             } */
             resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+            tempGrid = grid;
         }
+
+        ImGui::Checkbox("Random Plants", &imguiData.randomPlants);
+        ImGui::Checkbox("Random Herbivores", &imguiData.randomHerbivores);
 
         if(ImGui::Button("Clear")){
             reInitialiseGrid(grid, numHorizontalCells, numVerticalCells, cellSize, imguiData);
+            tempGrid = grid;
         }
 
         if(ImGui::SliderInt("Cell Size", &cellSize, 5, 100)){
@@ -325,10 +391,12 @@ int main(){
                 int y = i / numHorizontalCells;
                 grid.push_back(Cell(x, y, cellSize, imguiData));
             }            
+            tempGrid = grid;
         }
 
         if(ImGui::Button("Reset All None Value Cells")){
             resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+            tempGrid = grid;
         }
 
         if(ImGui::Button("Save Image")){
@@ -348,7 +416,13 @@ int main(){
             }
         }
 
+        ImGui::Text(std::to_string(fps).c_str());
+
         ImGui::End();
+
+        end = std::chrono::high_resolution_clock::now();
+        fps = (float)1e9/(float)std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
+        //std::cout<<fps<<'\n';
 
         ImGui::SFML::Render(window);
         window.display();
