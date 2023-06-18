@@ -25,6 +25,14 @@ void setCellSize(int cellSize, int& numHV, int& numVV, const int WX, const int W
     numVV = WY/cellSize;
 }
 
+void reInitialiseGrid(std::vector<Cell>& grid, int numHorizontalCells, int numVerticalCells, int cellSize, ImguiData& imguiData){
+    for(int i = 0; i < numHorizontalCells * numVerticalCells; i++){
+        int x = i % numHorizontalCells;
+        int y = i / numHorizontalCells;
+        grid[i] = Cell(x, y, cellSize, imguiData);
+    }
+}
+
 int main(){
     const int windowX = sf::VideoMode::getDesktopMode().width;
     const int windowY = sf::VideoMode::getDesktopMode().height;
@@ -72,11 +80,7 @@ int main(){
             }
         }
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space)){
-            for(int i = 0; i < numHorizontalCells * numVerticalCells; i++){
-                int x = i % numHorizontalCells;
-                int y = i / numHorizontalCells;
-                grid[i] = Cell(x, y, cellSize, imguiData);
-            }
+            reInitialiseGrid(grid, numHorizontalCells, numVerticalCells, cellSize, imguiData);
         }
         ImGui::SFML::Update(window, deltaClock.restart());
 
@@ -241,6 +245,10 @@ int main(){
                 }
             } */
             resetAllNoneCells(grid, cellSize, imguiData, numHorizontalCells, numVerticalCells);
+        }
+
+        if(ImGui::Button("Clear")){
+            reInitialiseGrid(grid, numHorizontalCells, numVerticalCells, cellSize, imguiData);
         }
 
         if(ImGui::SliderInt("Cell Size", &cellSize, 5, 100)){
