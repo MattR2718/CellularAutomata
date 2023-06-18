@@ -76,6 +76,11 @@ int main(){
                     auto[mx, my]{mousePos};
                     grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Plant;
                     if(imguiData.chooseStartColour){ grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
+                }else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)){
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                    auto[mx, my]{mousePos};
+                    grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].type = CellType::Herbivore;
+                    if(imguiData.chooseStartColour){ grid[(my / cellSize) * numHorizontalCells + (mx / cellSize)].colour = Colour(Colour::rgb2hsv(imguiData.startColour)); }
                 }
             }
         }
@@ -86,9 +91,10 @@ int main(){
 
         window.clear(sf::Color::Black);
 
-        //Expand plants
+        //Update Cells
         if(imguiData.running){
             for(int i = 0; i < (numHorizontalCells * numVerticalCells); i++){
+                //Expand Plants
                 if(grid[i].type == CellType::Plant){
                     int x = i % numHorizontalCells;
                     int y = i / numHorizontalCells;
@@ -121,6 +127,9 @@ int main(){
                             }
                         }
                     }
+                //Expand Herbivores
+                }else if(grid[i].type == CellType::Herbivore){
+
                 }
             }
         }
@@ -129,7 +138,7 @@ int main(){
         for(int i = 0; i < (numHorizontalCells * numVerticalCells); i++){
             int x = i % numHorizontalCells;
             int y = i / numHorizontalCells;
-            window.draw(grid[i].draw());
+            grid[i].draw(&window);
         }
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 10));

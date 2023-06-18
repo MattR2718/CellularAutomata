@@ -10,7 +10,8 @@ class Cell{
     public:
         CellType type = CellType::None;
         Colour colour;
-        sf::RectangleShape shape;
+        sf::RectangleShape plantShape;
+        sf::CircleShape herbivoreShape;
         Cell(int x, int y, int s, const ImguiData& imguiData){
             this->type = CellType::None;
             
@@ -46,19 +47,25 @@ class Cell{
 
             this->colour = Colour(hue, saturation, value);
 
-            this->shape.setSize(sf::Vector2f(static_cast<float>(s), static_cast<float>(s)));
-            this->shape.setPosition(sf::Vector2f(static_cast<float>(x * s), static_cast<float>(y * s)));
+            this->plantShape.setSize(sf::Vector2f(static_cast<float>(s), static_cast<float>(s)));
+            this->plantShape.setPosition(sf::Vector2f(static_cast<float>(x * s), static_cast<float>(y * s)));
+            
+            this->herbivoreShape.setPosition(sf::Vector2f(static_cast<float>(x * s), static_cast<float>(y * s)));
+            this->herbivoreShape.setRadius(static_cast<float>(s/2));
         }
         void setType(CellType newtype){
             if(this->type == CellType::None){
                 this->type = newtype;
             }
         }
-        sf::RectangleShape draw(){
-            this->shape.setFillColor(((type == CellType::None) ? sf::Color::Black : this->colour.getColour()));
+        void draw(sf::RenderWindow* window){
+            this->herbivoreShape.setFillColor(((type == CellType::None) ? sf::Color::Black : this->colour.getColour()));
+            this->plantShape.setFillColor(((type == CellType::None) ? sf::Color::Black : this->colour.getColour()));
             //this->shape.setFillColor(this->colour.getColour());
 
-            return this->shape;
+            //window->draw(((this->type == CellType::Plant) ? this->plantShape : this->herbivoreShape));
+            if(this->type == CellType::Herbivore){ window->draw(this->herbivoreShape); }
+            else{ window->draw(this->plantShape); }
         }
 
 };
