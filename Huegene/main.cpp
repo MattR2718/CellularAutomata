@@ -33,6 +33,28 @@ void reInitialiseGrid(std::vector<Cell>& grid, int numHorizontalCells, int numVe
     }
 }
 
+void mutate(int index, std::vector<Cell>& grid, ImguiData& imguiData, std::mt19937& rng, 
+            std::uniform_int_distribution<std::mt19937::result_type>& dist01,
+            std::uniform_real_distribution<>& realdist05){
+    if(imguiData.modifyHue){
+        grid[index].colour.h += (dist01(rng) - 0.5);
+        if(grid[index].colour.h < 0){ grid[index].colour.h = 360; }
+        if(grid[index].colour.h > 360){ grid[index].colour.h = 0; }
+    }
+    
+    if(imguiData.modifySaturation){
+        grid[index].colour.s += (realdist05(rng)/100 - 0.025);
+        if(grid[index].colour.s < 0.0){ grid[index].colour.s = 0.0; }
+        if(grid[index].colour.s > 1.0){ grid[index].colour.s = 1.0; }
+    }
+
+    if(imguiData.modifyValue){
+        grid[index].colour.v += (realdist05(rng)/100 - 0.025);
+        if(grid[index].colour.v < 0.0){ grid[index].colour.v = 0.0; }
+        if(grid[index].colour.v > 1.0){ grid[index].colour.v = 1.0; }
+    }
+}
+
 int main(){
     const int windowX = sf::VideoMode::getDesktopMode().width;
     const int windowY = sf::VideoMode::getDesktopMode().height;
@@ -48,16 +70,19 @@ int main(){
     //std::cout<<numHorizontalCells<<' '<<numVerticalCells<<'\n';
 
     std::vector<Cell> grid;
+    std::vector<Cell> tempGrid;
     for(int i = 0; i < numHorizontalCells * numVerticalCells; i++){
         int x = i % numHorizontalCells;
         int y = i / numHorizontalCells;
         grid.push_back(Cell(x, y, cellSize, imguiData));
     }
+    tempGrid = grid;
 
     std::random_device dev;
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist010(0, 10);
     std::uniform_int_distribution<std::mt19937::result_type> dist01(0, 1);
+    std::uniform_int_distribution<std::mt19937::result_type> dist02(0, 2);
     std::uniform_real_distribution<> realdist05(0.0, 5.0);
     //Cell grid[100000];
 
@@ -106,7 +131,9 @@ int main(){
                                 grid[index].type = CellType::Plant;
                                 grid[index].colour = grid[y * numHorizontalCells + x].colour;
                                 
-                                if(imguiData.modifyHue){
+                                mutate(index, grid, imguiData, rng, dist01, realdist05);
+
+                                /* if(imguiData.modifyHue){
                                     grid[index].colour.h += (dist01(rng) - 0.5);
                                     if(grid[index].colour.h < 0){ grid[index].colour.h = 360; }
                                     if(grid[index].colour.h > 360){ grid[index].colour.h = 0; }
@@ -122,14 +149,44 @@ int main(){
                                     grid[index].colour.v += (realdist05(rng)/100 - 0.025);
                                     if(grid[index].colour.v < 0.0){ grid[index].colour.v = 0.0; }
                                     if(grid[index].colour.v > 1.0){ grid[index].colour.v = 1.0; }
-                                }
+                                } */
                                 
                             }
                         }
                     }
                 //Expand Herbivores
                 }else if(grid[i].type == CellType::Herbivore){
+                    int x = i % numHorizontalCells;
+                    int y = i / numHorizontalCells;
+                    std::vector<int> surroundingPlants;
+                    for(int j = -1; j < 2; j++){
+                        for(int k = -1; k < 2; k++){
+                            if((y + k) < 0 || (y + k) > (numVerticalCells - 1) || (x + j) < 0 || (x + j) > (numHorizontalCells - 1)){ continue; }
+                            int index = (y + k) * numHorizontalCells + (x + j);
+                            if(grid[index].type == CellType::Plant){
+                                surroundingPlants.push_back(index);
+                            }
+                        }
+                    }
+                    if(surroundingPlants.size() == 0){
+                        int nextx = x + dist02(rng) - 1;
+                        int nexty = y + dist02(rng) - 1;
+                        if(nextx < 0 || nextx > (numHorizontalCells - 1) || nexty < 0 || nexty > (numVerticalCells - 1)){ break; }
+                        grid[nexty * numHorizontalCells + nextx] = grid[y * numHorizontalCells + x];
+                        grid[y * numHorizontalCells + x] = Cell(x, y, cellSize, imguiData);
+                    }else{
+                        for(auto ind : surroundingPlants){
+                            float diff = std::max(grid[i].colour.h, grid[ind].colour.h) - std::min(grid[i].colour.h, grid[ind].colour.h);
+                            if(diff > 180){ diff = 360 - diff; }
+                            diff *= 2;
 
+                            if(!dist01(rng)){
+                                grid[ind].type = CellType::Herbivore;
+                                mutate(ind, grid, imguiData, rng, dist01, realdist05);
+                            }
+                        }
+                        grid[i].type = CellType::None;
+                    }
                 }
             }
         }
